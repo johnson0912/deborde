@@ -4,7 +4,7 @@ const jwt = require('jsonwebtoken');
 
 const getAllUsers = async (req, res) => {
     try {
-        const [rows] = await pool.query('SELECT id, lastname, firstname, username, gender, created_at, updated_at FROM users');
+        const [rows] = await pool.query('SELECT user_id, lastname, firstname, username, gender, created_at, updated_at FROM users');
         res.json(rows);
     } catch (err) {
         res.status(500).json({ error: err.message });
@@ -15,7 +15,7 @@ const getUserById = async (req, res) => {
     const { id } = req.params;
 
     try {
-        const [rows] = await pool.query('SELECT id, lastname, firstname, username, gender, created_at, updated_at FROM users WHERE id = ?', [id]); // Include gender
+        const [rows] = await pool.query('SELECT user_id, lastname, firstname, username, gender, created_at, updated_at FROM users WHERE id = ?', [id]); // Include gender
 
         if (rows.length === 0) {
             return res.status(404).json({ error: 'User not found' });
@@ -58,7 +58,7 @@ const updateUser = async (req, res) => {
     try {
         const hashedPassword = await bcrypt.hash(passwordx, 10); // Hash passwordx
         const [result] = await pool.query(
-            'UPDATE users SET lastname = ?, firstname = ?, username = ?, passwordx = ?, gender = ? WHERE id = ?', 
+            'UPDATE users SET lastname = ?, firstname = ?, username = ?, passwordx = ?, gender = ? WHERE user_id = ?', 
             [lastname, firstname, username, hashedPassword, gender, id] // Update with new fields
         );
 
@@ -77,7 +77,7 @@ const deleteUser = async (req, res) => {
     const { id } = req.params;
 
     try {
-        const [result] = await pool.query('DELETE FROM users WHERE id = ?', [id]);
+        const [result] = await pool.query('DELETE FROM users WHERE user_id = ?', [id]);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ error: 'User not found' });
