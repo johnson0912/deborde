@@ -2,14 +2,15 @@ const pool = require('../config/database');
 const bcrypt = require('bcryptjs');
 
 const getAllUsers = async (req, res) => {
-  try {
-    const [rows] = await pool.query('SELECT user_id, fullname, username, created_at, updated_at FROM users');
-    res.json(rows);
-  } catch (error) {
-    console.error("Error fetching users:", error);
-    res.status(500).json({ error: error.message });
-  }
+    try {
+        const [rows] = await pool.query('SELECT user_id, lastname, firstname, username FROM users');
+        res.json(rows);
+    } catch (err) {
+        console.error("Error fetching users:", err); // Log the error
+        res.status(500).json({ error: 'Failed to retrieve users' });
+    }
 };
+
 
 const getUserById = async (req, res) => {
   const { id } = req.params;
