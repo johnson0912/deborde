@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { getAllDepartments, getDepartmentById, createDepartment, updateDepartment, deleteDepartment } = require('../controllers/deptController');
+const { getAllDepartments, getDepartmentById, createDepartment, updateDepartment, deleteDepartment } = require('../controllers/deptcontroller');
 const authenticateToken = require('../middleware/authMiddleware');
 
 router.get('/', authenticateToken, getAllDepartments);
