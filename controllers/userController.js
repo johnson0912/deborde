@@ -1,92 +1,67 @@
-const pool = require("../config/database");
-const bcrypt = require('bcryptjs');
-const jwt = require('jsonwebtoken');
-
+const pool = require('../config/database');
+const bcrypt = require('bcrypt');
+const { json } = require('express');
+const salt = 15;
+ 
 const getAllUsers = async (req, res) => {
-    try {
-        const [rows] = await pool.query('SELECT user_id, lastname, firstname, username, gender, created_at, updated_at FROM users');
-        res.json(rows);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+  try {
+    const [rows] = await pool.query('SELECT user_id, fullname, username, created_at, updated_at FROM users');
+    res.json(rows);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 const getUserById = async (req, res) => {
-    const { id } = req.params;
-
-    try {
-        const [rows] = await pool.query('SELECT user_id, lastname, firstname, username, gender, created_at, updated_at FROM users WHERE id = ?', [id]); // Include gender
-
-        if (rows.length === 0) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        res.json(rows[0]);
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+  const { id } = req.params;
+  try {
+    const [row] = await pool.query('SELECT user_id, fullname, username, created_at, updated_at FROM users WHERE user_id = ?', [id]);
+    if (row.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
     }
+    res.json(row[0]);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 const createUser = async (req, res) => {
-    const { lastname, firstname, username, password, gender } = req.body; // Include gender
-
-    // Validate gender input
-    if (gender !== 'M' && gender !== 'F') {
-        return res.status(400).json({ error: 'Must be M or F.' });
-    }
-
-    try {
-        const hashedPassword = await bcrypt.hash(password, 10);
-        const [result] = await pool.query('INSERT INTO users (lastname, firstname, username, passwordx, gender) VALUES (?, ?, ?, ?, ?)', 
-        [lastname, firstname, username, hashedPassword, gender]); // Insert gender
-
-        res.status(201).json({ message: 'User created successfully', userId: result.insertId });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+  const { fullname, username, password } = req.body;
+  try {
+    const hashedPassword = await bcrypt.hash(password, salt);
+    await pool.query('INSERT INTO users (fullname, username, password) VALUES (?, ?, ?)', [fullname, username, hashedPassword]);
+    res.status(201).json({ message: 'User created successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 const updateUser = async (req, res) => {
-    const { id } = req.params;
-    const { lastname, firstname, username, passwordx, gender } = req.body; // Use lastname and firstname
-
-    // Validate gender input
-    if (gender !== 'M' && gender !== 'F') {
-        return res.status(400).json({ error: 'Invalid gender value. Must be M or F.' });
+  const { id } = req.params;
+  const { fullname, username, password } = req.body;
+  try {
+    const hashedPassword = await bcrypt.hash(password, salt);
+    const [result] = await pool.query('UPDATE users SET fullname = ?, username = ?, password = ? WHERE user_id = ?', [fullname, username, hashedPassword, id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'User not found' });
     }
-
-    try {
-        const hashedPassword = await bcrypt.hash(passwordx, 10); // Hash passwordx
-        const [result] = await pool.query(
-            'UPDATE users SET lastname = ?, firstname = ?, username = ?, passwordx = ?, gender = ? WHERE user_id = ?', 
-            [lastname, firstname, username, hashedPassword, gender, id] // Update with new fields
-        );
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        res.json({ message: 'User updated successfully' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
-    }
+    res.json({ message: 'User updated successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
-
 const deleteUser = async (req, res) => {
-    const { id } = req.params;
-
-    try {
-        const [result] = await pool.query('DELETE FROM users WHERE user_id = ?', [id]);
-
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ error: 'User not found' });
-        }
-
-        res.json({ message: 'User deleted successfully' });
-    } catch (err) {
-        res.status(500).json({ error: err.message });
+  const { id } = req.params;
+  try {
+    const [result] = await pool.query('DELETE FROM users WHERE user_id = ?', [id]);
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ error: 'User not found' });
     }
+    res.json({ message: 'User deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
 };
 
 module.exports = { getAllUsers, getUserById, createUser, updateUser, deleteUser };
